@@ -10,7 +10,7 @@ const Index = () => {
   const toast = useToast();
 
   const handleDraw = async () => {
-    const parsedParticipants = parseParticipants(participants);
+    const parsedParticipants = participants;
     const selectedWinners = drawWinners(parsedParticipants, parseInt(numberOfWinners));
     const timestamp = new Date().toISOString();
 
@@ -27,21 +27,27 @@ const Index = () => {
     });
   };
 
-  const parseParticipants = (input) => {
-    return input.split("\n").map((line) => {
+  const handleFileChange = async (file) => {
+    const text = await file.text();
+    const participants = text.split("\n").map((line) => {
       const [name, odds] = line.split(",");
       return { name, odds: parseFloat(odds) };
     });
+    setParticipants(participants);
   };
 
   const drawWinners = (participants, numWinners) => {
     const results = [];
-    const totalOdds = participants.reduce((acc, participant) => acc + participant.odds, 0);
-    for (let i = 0; i < numWinners; i++) {
+    let totalOdds = participants.reduce((acc, participant) => acc + participant.odds, 0);
+    const shuffledParticipants = participants.sort(() => 0.5 - Math.random());
+    while (results.length < numWinners && shuffledParticipants.length > 0) {
       let randomPoint = Math.random() * totalOdds;
-      for (const participant of participants) {
+      for (let i = 0; i < shuffledParticipants.length; i++) {
+        const participant = shuffledParticipants[i];
         if (randomPoint < participant.odds) {
           results.push(participant);
+          shuffledParticipants.splice(i, 1);
+          totalOdds -= participant.odds;
           break;
         }
         randomPoint -= participant.odds;
@@ -54,8 +60,8 @@ const Index = () => {
     <Container maxW="container.md">
       <VStack spacing={4} as="form" onSubmit={(e) => e.preventDefault()}>
         <FormControl isRequired>
-          <FormLabel>Participants and Odds</FormLabel>
-          <Input as="textarea" placeholder="Name1, Odds1\nName2, Odds2\n..." value={participants} onChange={(e) => setParticipants(e.target.value)} height="150px" />
+          <FormLabel>Upload Participants CSV</FormLabel>
+          <Input type="file" accept=".csv" onChange={(e) => handleFileChange(e.target.files[0])} />
         </FormControl>
         <FormControl isRequired>
           <FormLabel>Number of Winners</FormLabel>
