@@ -1,5 +1,6 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Index from "./pages/Index.jsx";
+import History from "./pages/History.jsx";
 
 function App() {
   return (
